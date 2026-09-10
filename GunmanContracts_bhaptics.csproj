@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\net6\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Bhaptics.Tact">
+      <HintPath>Bhaptics.Tact.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Il2CppHurricaneVR.Framework">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\Il2CppHurricaneVR.Framework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="XCOPY &quot;$(SolutionDir)\bhaptics_library.dll&quot; &quot;G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\Mods&quot; /Y&#xD;&#xA;XCOPY &quot;$(TargetDir)*.dll&quot; &quot;G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\Mods&quot; /Y" />
+  </Target>
+
+</Project>
