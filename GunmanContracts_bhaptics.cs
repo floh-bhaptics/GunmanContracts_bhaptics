@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
+using Il2CppHurricaneVR.Framework.Core.Player;
 using Il2CppHurricaneVR.Framework.Weapons.Bow;
 using Il2CppHurricaneVR.Framework.Weapons.Guns;
 using Il2CppKnifePlayerController;
@@ -23,87 +24,44 @@ namespace GunmanContracts_bhaptics
             tactsuitVr.PlaybackHaptics("HeartBeat");
         }
 
-        private static (float angle, float shift) GetHapticsDirection(Vector3 hitDirection)
+        private static (float angle, float shift) GetHapticsDirection(Transform player, Vector3 hitPosition)
         {
-            // bhaptics pattern: 0° = front, 90° = left, 270° = right, increasing clockwise.
-            // Ignoring vertical component for now (shift stays 0).
-            Vector3 flatDir = new Vector3(hitDirection.x, 0f, hitDirection.z);
-            if (flatDir == Vector3.zero) return (0f, 0f);
+            // Direct port of the ArkenAge getAngleAndShift logic.
+            Vector3 patternOrigin = new Vector3(0f, 0f, 1f);
+            Vector3 relativeHit = hitPosition - player.position;
+            Vector3 playerDir = player.rotation.eulerAngles;
 
-            float angle = Vector3.SignedAngle(flatDir, Vector3.forward, Vector3.up);
-            if (angle < 0f) angle += 360f;
+            Vector3 flattenedHit = new Vector3(relativeHit.x, 0f, relativeHit.z);
+            float hitAngle = Vector3.Angle(flattenedHit, patternOrigin);
+            Vector3 crossProduct = Vector3.Cross(flattenedHit, patternOrigin);
+            if (crossProduct.y > 0f) hitAngle *= -1f;
 
-            return (angle, 0f);
+            float myRotation = hitAngle - playerDir.y;
+            myRotation *= -1f;
+            if (myRotation < 0f) myRotation = 360f + myRotation;
+
+            float hitShift = relativeHit.y;
+            float upperBound = 0.0f;
+            float lowerBound = -0.5f; // may need re-tuning to Gunman Contracts' scale later
+            if (hitShift > upperBound) hitShift = 0.5f;
+            else if (hitShift < lowerBound) hitShift = -0.5f;
+            else hitShift = (hitShift - lowerBound) / (upperBound - lowerBound) - 0.5f;
+
+            return (myRotation, hitShift);
         }
-        
-        [HarmonyPatch(typeof(HealthManagerXtra), "TakeDamage")]
-        public class bhaptics_TakeDamage
+
+        [HarmonyPatch(typeof(ANBGameLogic), "HurtPlayer")]
+        public class bhaptics_HurtPlayer
         {
             [HarmonyPostfix]
-            public static void Postfix(HealthManagerXtra __instance, Vector3 direction)
+            public static void Postfix(ANBGameLogic __instance, string type, float dmg, ANBBasicNPC attacker)
             {
-                tactsuitVr.LOG("Xtra!");
-                try
-                {
-                    var (angle, shift) = GetHapticsDirection(direction);
-                    tactsuitVr.PlayBackHit("bullet_hit", angle, shift);
-                    if (__instance.dead) tactsuitVr.StopThreads();
-                }
-                catch (Exception ex)
-                {
-                    tactsuitVr.LOG($"bhaptics_Health_TakeDamage crashed: {ex}");
-                }
-            }
-        }
-        /*
-        [HarmonyPatch(typeof(PlayerHealth), "TakeDamage")]
-        public class bhaptics_Health_TakeDamage
-        {
-            [HarmonyPostfix]
-            public static void Postfix(PlayerHealth __instance, DamageData damage)
-            {
-                tactsuitVr.LOG("HealthDamage!");
-                var (angle, shift) = GetHapticsDirection(damage.HitDirection);
+                if (attacker == null) return; // no world position to derive a direction from
+
+                var (angle, shift) = GetHapticsDirection(Camera.main.transform, attacker.transform.position);
                 tactsuitVr.PlayBackHit("impact", angle, shift);
-                if (__instance.health <= 0.25f * __instance.startHealth) tactsuitVr.StartHeartBeat();
-                else tactsuitVr.StopHeartBeat();
-                if (damage.Deadly) tactsuitVr.StopThreads();
-                if (__instance.health <= 0.0f) tactsuitVr.StopThreads();
             }
         }
-
-        [HarmonyPatch(typeof(PlayerDamageHandler), "damaged")]
-        public class bhaptics_PlayerDamaged
-        {
-            [HarmonyPostfix]
-            public static void Postfix(PlayerDamageHandler __instance, DamageData damage)
-            {
-                tactsuitVr.LOG("damaged!");
-                try
-                {
-                    var (angle, shift) = GetHapticsDirection(damage.HitDirection);
-                    tactsuitVr.PlayBackHit("bullet_hit", angle, shift);
-                }
-                catch (Exception ex)
-                {
-                    tactsuitVr.LOG($"bhaptics_Health_TakeDamage crashed: {ex}");
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerHealthBar), "Update")]
-        public class bhaptics_checkHealth
-        {
-            [HarmonyPostfix]
-            public static void Postfix(PlayerHealthBar __instance)
-            {
-                if (__instance.health.HealthFraction <= 0.25f) tactsuitVr.StartHeartBeat();
-                else tactsuitVr.StopHeartBeat();
-                if (__instance.health.health <= 0.0f) tactsuitVr.StopThreads();
-            }
-        }
-        
-*/
 
         [HarmonyPatch(typeof(ANBGameLogic), "holsterGun")]
         public class bhaptics_HolsterGun
