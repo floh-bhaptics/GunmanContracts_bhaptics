@@ -25,6 +25,14 @@
       <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\Il2CppHurricaneVR.Framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="MelonLoader">
       <HintPath>G:\SteamLibrary\steamapps\common\Gunman Contracts - Stand Alone\MelonLoader\net6\MelonLoader.dll</HintPath>
       <Private>False</Private>

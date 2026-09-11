@@ -55,19 +55,39 @@ namespace GunmanContracts_bhaptics
             [HarmonyPostfix]
             public static void Postfix(ANBHVRGunBase __instance, Vector3 direction)
             {
+                if (__instance.EnemyGun) return;
                 if (__instance.isBow) return; // this class also drives the bow's flatscreen fallback — skip it here
 
-                bool isRight = __instance.myGrabbable.IsRightHandGrabbed;
-                bool isLeft = __instance.myGrabbable.IsLeftHandGrabbed;
-                bool twoHanded = false;
-                if (isRight && isLeft) twoHanded = true;
-                // bool stabilized = __instance.gunStabilized;
+                var primaryGrab = __instance.myGrabbable;
+                if (primaryGrab == null) return; // shouldn't happen on fire, but just in case
+
+                bool isRight = primaryGrab.IsRightHandGrabbed;
+                bool isLeft = primaryGrab.IsLeftHandGrabbed;
+                bool twoHanded = isRight && isLeft; // both hands somehow on the same grip point
+
+                // Check whether the *other* hand is holding a second grip point (foregrip, rail, etc.)
+                var hapticGrabbables = __instance.HapticGrabbables;
+                if (!twoHanded && hapticGrabbables != null)
+                {
+                    for (int i = 0; i < hapticGrabbables.Count; i++)
+                    {
+                        var grabbable = hapticGrabbables[i];
+                        if (grabbable == null || grabbable == primaryGrab) continue;
+
+                        if ((isRight && grabbable.IsLeftHandGrabbed) || (isLeft && grabbable.IsRightHandGrabbed))
+                        {
+                            twoHanded = true;
+                            break;
+                        }
+                    }
+                }
+
                 bool isShotgun = __instance.isShotgun;
                 bool isRifle = (__instance.FireType == GunFireType.Automatic);
+
                 tactsuitVr.GunRecoil(isRightHand: isRight, twoHanded: twoHanded, isShotgun: isShotgun, isRifle: isRifle);
             }
         }
-
         [HarmonyPatch(typeof(HVRPhysicsBow), "ShootArrow")]
         public class bhaptics_BowShoot
         {
@@ -78,6 +98,7 @@ namespace GunmanContracts_bhaptics
                 tactsuitVr.ShootBow(isRight);
             }
         }
+
 
     }
 }
