@@ -74,21 +74,6 @@ namespace MyBhapticsTactsuit
 
         }
 
-        public void CastSpell(bool isRightHand, float intensity = 1.0f)
-        {
-            float duration = 1.0f;
-            string postfix = "_L";
-            if (isRightHand) { postfix = "_R"; }
-
-            string keyHand = "SpellHand" + postfix;
-            string keyArm = "SpellArm" + postfix;
-            string keyVest = "SpellVest" + postfix;
-
-            BhapticsSDK2.Play(keyHand.ToLower(), intensity, duration, 0f, 0f);
-            BhapticsSDK2.Play(keyArm.ToLower(), intensity, duration, 0f, 0f);
-            BhapticsSDK2.Play(keyVest.ToLower(), intensity, duration, 0f, 0f);
-        }
-
         public void ShootBow(bool isRightHand, float intensity = 1.0f)
         {
             float duration = 1.0f;
@@ -100,20 +85,6 @@ namespace MyBhapticsTactsuit
             BhapticsSDK2.Play(keyVest.ToLower(), intensity, duration, 0f, 0f);
         }
 
-
-        public void SwordRecoil(bool isRightHand, float intensity = 1.0f)
-        {
-            float duration = 1.0f;
-            string postfix = "_L";
-            if (isRightHand) { postfix = "_R"; }
-            string keyArm = "SwordArms" + postfix;
-            string keyVest = "SwordVest" + postfix;
-            string keyHands = "RecoilHands" + postfix;
-
-            BhapticsSDK2.Play(keyHands.ToLower(), intensity, duration, 0f, 0f);
-            BhapticsSDK2.Play(keyArm.ToLower(), intensity, duration, 0f, 0f);
-            BhapticsSDK2.Play(keyVest.ToLower(), intensity, duration, 0f, 0f);
-        }
 
         public void HeadShot(float hitAngle)
         {
@@ -127,12 +98,23 @@ namespace MyBhapticsTactsuit
             else { PlayBackHit("BulletHit", hitAngle, 0.5f); }
         }
 
-        public void FootStep(bool isRightFoot)
+        public void PlayHolsterIn(bool isRight, bool isBack)
         {
-            if (!BhapticsSDK2.IsDeviceConnected(PositionType.FootL)) { return; }
-            string postfix = "_L";
-            if (isRightFoot) { postfix = "_R"; }
-            string key = "FootStep" + postfix;
+            string key = "holster";
+            if (isBack) key += "_shoulder";
+            else key += "_hip";
+            if (isRight) key += "_r";
+            else key += "_l";
+            PlaybackHaptics(key);
+        }
+
+        public void PlayHolsterOut(bool isRight, bool isBack)
+        {
+            string key = "unholster";
+            if (isBack) key += "_shoulder";
+            else key += "_hip";
+            if (isRight) key += "_r";
+            else key += "_l";
             PlaybackHaptics(key);
         }
 

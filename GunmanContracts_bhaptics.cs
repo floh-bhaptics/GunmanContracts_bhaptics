@@ -2,8 +2,10 @@
 using Il2Cpp;
 using Il2CppHurricaneVR.Framework.Weapons.Bow;
 using Il2CppHurricaneVR.Framework.Weapons.Guns;
+using Il2CppKnifePlayerController;
 using MelonLoader;
 using MyBhapticsTactsuit;
+using System;
 using UnityEngine;
 
 [assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.0.0", "Florian Fahrenberger")]
@@ -33,19 +35,97 @@ namespace GunmanContracts_bhaptics
 
             return (angle, 0f);
         }
-
+        
+        [HarmonyPatch(typeof(HealthManagerXtra), "TakeDamage")]
+        public class bhaptics_TakeDamage
+        {
+            [HarmonyPostfix]
+            public static void Postfix(HealthManagerXtra __instance, Vector3 direction)
+            {
+                tactsuitVr.LOG("Xtra!");
+                try
+                {
+                    var (angle, shift) = GetHapticsDirection(direction);
+                    tactsuitVr.PlayBackHit("bullet_hit", angle, shift);
+                    if (__instance.dead) tactsuitVr.StopThreads();
+                }
+                catch (Exception ex)
+                {
+                    tactsuitVr.LOG($"bhaptics_Health_TakeDamage crashed: {ex}");
+                }
+            }
+        }
+        /*
         [HarmonyPatch(typeof(PlayerHealth), "TakeDamage")]
         public class bhaptics_Health_TakeDamage
         {
             [HarmonyPostfix]
             public static void Postfix(PlayerHealth __instance, DamageData damage)
             {
+                tactsuitVr.LOG("HealthDamage!");
                 var (angle, shift) = GetHapticsDirection(damage.HitDirection);
                 tactsuitVr.PlayBackHit("impact", angle, shift);
                 if (__instance.health <= 0.25f * __instance.startHealth) tactsuitVr.StartHeartBeat();
                 else tactsuitVr.StopHeartBeat();
                 if (damage.Deadly) tactsuitVr.StopThreads();
                 if (__instance.health <= 0.0f) tactsuitVr.StopThreads();
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerDamageHandler), "damaged")]
+        public class bhaptics_PlayerDamaged
+        {
+            [HarmonyPostfix]
+            public static void Postfix(PlayerDamageHandler __instance, DamageData damage)
+            {
+                tactsuitVr.LOG("damaged!");
+                try
+                {
+                    var (angle, shift) = GetHapticsDirection(damage.HitDirection);
+                    tactsuitVr.PlayBackHit("bullet_hit", angle, shift);
+                }
+                catch (Exception ex)
+                {
+                    tactsuitVr.LOG($"bhaptics_Health_TakeDamage crashed: {ex}");
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerHealthBar), "Update")]
+        public class bhaptics_checkHealth
+        {
+            [HarmonyPostfix]
+            public static void Postfix(PlayerHealthBar __instance)
+            {
+                if (__instance.health.HealthFraction <= 0.25f) tactsuitVr.StartHeartBeat();
+                else tactsuitVr.StopHeartBeat();
+                if (__instance.health.health <= 0.0f) tactsuitVr.StopThreads();
+            }
+        }
+        
+*/
+
+        [HarmonyPatch(typeof(ANBGameLogic), "holsterGun")]
+        public class bhaptics_HolsterGun
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side, ANBHVRGunBase tmpGBS)
+            {
+                bool isRight = ((side == "right")||(side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterIn(isRight, isBackHolster);
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "unholsterGun")]
+        public class bhaptics_UnholsterGun
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side, ANBHVRGunBase tmpGBS)
+            {
+                bool isRight = ((side == "right") || (side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterOut(isRight, isBackHolster);
             }
         }
 
@@ -88,6 +168,7 @@ namespace GunmanContracts_bhaptics
                 tactsuitVr.GunRecoil(isRightHand: isRight, twoHanded: twoHanded, isShotgun: isShotgun, isRifle: isRifle);
             }
         }
+
         [HarmonyPatch(typeof(HVRPhysicsBow), "ShootArrow")]
         public class bhaptics_BowShoot
         {
