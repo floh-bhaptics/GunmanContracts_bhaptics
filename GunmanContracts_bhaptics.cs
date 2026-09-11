@@ -26,7 +26,6 @@ namespace GunmanContracts_bhaptics
 
         private static (float angle, float shift) GetHapticsDirection(Transform player, Vector3 hitPosition)
         {
-            // Direct port of the ArkenAge getAngleAndShift logic.
             Vector3 patternOrigin = new Vector3(0f, 0f, 1f);
             Vector3 relativeHit = hitPosition - player.position;
             Vector3 playerDir = player.rotation.eulerAngles;
@@ -42,7 +41,7 @@ namespace GunmanContracts_bhaptics
 
             float hitShift = relativeHit.y;
             float upperBound = 0.0f;
-            float lowerBound = -0.5f; // may need re-tuning to Gunman Contracts' scale later
+            float lowerBound = -0.5f;
             if (hitShift > upperBound) hitShift = 0.5f;
             else if (hitShift < lowerBound) hitShift = -0.5f;
             else hitShift = (hitShift - lowerBound) / (upperBound - lowerBound) - 0.5f;
@@ -56,12 +55,37 @@ namespace GunmanContracts_bhaptics
             [HarmonyPostfix]
             public static void Postfix(ANBGameLogic __instance, string type, float dmg, ANBBasicNPC attacker)
             {
-                if (attacker == null) return; // no world position to derive a direction from
+                if (attacker == null) return;
 
                 var (angle, shift) = GetHapticsDirection(Camera.main.transform, attacker.transform.position);
                 tactsuitVr.PlayBackHit("impact", angle, shift);
             }
         }
+        /*
+        private static bool heartbeatActive = false;
+
+        [HarmonyPatch(typeof(ANBWristHud), "checkHealth")]
+        public class bhaptics_CheckHealth
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBWristHud __instance)
+            {
+                tactsuitVr.LOG("checkHealth: " + __instance.healthColor.ToString() + " " + __instance.healthColorCritical.ToString());
+                bool isCritical = __instance.healthColor == __instance.healthColorCritical;
+
+                if (isCritical && !heartbeatActive)
+                {
+                    heartbeatActive = true;
+                    tactsuitVr.StartHeartBeat();
+                }
+                else if (!isCritical && heartbeatActive)
+                {
+                    heartbeatActive = false;
+                    tactsuitVr.StopHeartBeat();
+                }
+            }
+        }
+        */
 
         [HarmonyPatch(typeof(ANBGameLogic), "holsterGun")]
         public class bhaptics_HolsterGun
