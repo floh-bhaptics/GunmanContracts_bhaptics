@@ -13,7 +13,7 @@ using MyBhapticsTactsuit;
 using System;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.0.2", "Florian Fahrenberger")]
+[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.1.0", "Florian Fahrenberger")]
 [assembly: MelonGame("ANB_Seth", "GunmanContracts")]
 
 namespace GunmanContracts_bhaptics
@@ -27,6 +27,8 @@ namespace GunmanContracts_bhaptics
             tactsuitVr = new TactsuitVR();
             tactsuitVr.PlaybackHaptics("HeartBeat");
         }
+
+        #region Damage / Health
 
         private static (float angle, float shift) GetHapticsDirection(Transform player, Vector3 hitPosition)
         {
@@ -66,70 +68,50 @@ namespace GunmanContracts_bhaptics
             }
         }
 
-        [HarmonyPatch(typeof(ANBGameLogic), "CheckForCheats")]
-        public class bhaptics_DisableCheatCheck
+        [HarmonyPatch(typeof(ANBSFXPlayerManager), "TakeDamageLastHP")]
+        public class bhaptics_StartHeartbeat
         {
             [HarmonyPostfix]
-            public static void Postfix(ANBGameLogic __instance, ref bool __result)
+            public static void Postfix()
             {
-                if ((__instance.CheatGod) ||
-                    (__instance.CheatGunsDontKill) ||
-                    (__instance.CheatInfititeLastHP) ||
-                    (__instance.CheatInvisible) ||
-                    (__instance.CheatSlowmotion) ||
-                    (__instance.CheatUnlimitedMag)
-                    ) __result = true;
-                else __result = false;
+                tactsuitVr.StartHeartBeat();
             }
         }
 
-        [HarmonyPatch(typeof(ANBGameLogic), "holsterGun")]
-        public class bhaptics_HolsterGun
+        [HarmonyPatch(typeof(ANBSFXPlayerManager), "Heal")]
+        public class bhaptics_StopHeartbeat
         {
             [HarmonyPostfix]
-            public static void Postfix(string side)
+            public static void Postfix()
             {
-                bool isRight = ((side == "right")||(side == "backRight"));
-                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
-                tactsuitVr.PlayHolsterIn(isRight, isBackHolster);
+                tactsuitVr.StopHeartBeat();
+                tactsuitVr.PlaybackHaptics("healing");
             }
         }
 
-        [HarmonyPatch(typeof(ANBGameLogic), "unholsterGun")]
-        public class bhaptics_UnholsterGun
+        [HarmonyPatch(typeof(ANBGameLogic), "PlayerDeadCall")]
+        public class bhaptics_StopHeartbeatOnDeath
         {
             [HarmonyPostfix]
-            public static void Postfix(string side)
+            public static void Postfix()
             {
-                bool isRight = ((side == "right") || (side == "backRight"));
-                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
-                tactsuitVr.PlayHolsterOut(isRight, isBackHolster);
+                tactsuitVr.StopHeartBeat();
             }
         }
 
-        [HarmonyPatch(typeof(ANBGameLogic), "holsterKnife")]
-        public class bhaptics_HolsterKnife
+        [HarmonyPatch(typeof(ANBGameLogic), "endRun")]
+        public class bhaptics_StopHeartbeatOnEndRun
         {
             [HarmonyPostfix]
-            public static void Postfix(string side)
+            public static void Postfix()
             {
-                bool isRight = ((side == "right") || (side == "backRight"));
-                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
-                tactsuitVr.PlayHolsterIn(isRight, isBackHolster);
+                tactsuitVr.StopHeartBeat();
             }
         }
 
-        [HarmonyPatch(typeof(ANBGameLogic), "unholsterKnife")]
-        public class bhaptics_UnholsterKnife
-        {
-            [HarmonyPostfix]
-            public static void Postfix(string side)
-            {
-                bool isRight = ((side == "right") || (side == "backRight"));
-                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
-                tactsuitVr.PlayHolsterOut(isRight, isBackHolster);
-            }
-        }
+        #endregion
+
+        #region Weapon Handling
 
         [HarmonyPatch(typeof(ANBHVRGunBase), "OnFire")]
         public class bhaptics_GunFire
@@ -168,96 +150,6 @@ namespace GunmanContracts_bhaptics
                 bool isRifle = (__instance.FireType == GunFireType.Automatic);
 
                 tactsuitVr.GunRecoil(isRightHand: isRight, twoHanded: twoHanded, isShotgun: isShotgun, isRifle: isRifle);
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBAmmoBag), "removeAmmoCount")]
-        public class bhaptics_AmmoPouchRemove
-        {
-            [HarmonyPostfix]
-            public static void Postfix(string ammo, int removeVal)
-            {
-                tactsuitVr.PlaybackHaptics("ammo_pouch");
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "collectibleCollected")]
-        public class bhaptics_Collectible
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.PlaybackHaptics("ammo_pouch");
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "collectCoinWallet")]
-        public class bhaptics_CollectCoins
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.PlaybackHaptics("ammo_pouch");
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "creditAmmo")]
-        public class bhaptics_getAmmo
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.PlaybackHaptics("ammo_pouch");
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "substractAmmo")]
-        public class bhaptics_removeAmmo
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.PlaybackHaptics("ammo_pouch");
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBSFXPlayerManager), "TakeDamageLastHP")]
-        public class bhaptics_StartHeartbeat
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.StartHeartBeat();
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBSFXPlayerManager), "Heal")]
-        public class bhaptics_StopHeartbeat
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.StopHeartBeat();
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "PlayerDeadCall")]
-        public class bhaptics_StopHeartbeatOnDeath
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.StopHeartBeat();
-            }
-        }
-
-        [HarmonyPatch(typeof(ANBGameLogic), "endRun")]
-        public class bhaptics_StopHeartbeatOnEndRun
-        {
-            [HarmonyPostfix]
-            public static void Postfix()
-            {
-                tactsuitVr.StopHeartBeat();
             }
         }
 
@@ -333,6 +225,114 @@ namespace GunmanContracts_bhaptics
 
             }
         }
+
+        #endregion
+
+        #region Holsters
+
+        [HarmonyPatch(typeof(ANBGameLogic), "holsterGun")]
+        public class bhaptics_HolsterGun
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side)
+            {
+                bool isRight = ((side == "right") || (side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterIn(isRight, isBackHolster);
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "unholsterGun")]
+        public class bhaptics_UnholsterGun
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side)
+            {
+                bool isRight = ((side == "right") || (side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterOut(isRight, isBackHolster);
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "holsterKnife")]
+        public class bhaptics_HolsterKnife
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side)
+            {
+                bool isRight = ((side == "right") || (side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterIn(isRight, isBackHolster);
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "unholsterKnife")]
+        public class bhaptics_UnholsterKnife
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string side)
+            {
+                bool isRight = ((side == "right") || (side == "backRight"));
+                bool isBackHolster = ((side == "backLeft") || (side == "backRight"));
+                tactsuitVr.PlayHolsterOut(isRight, isBackHolster);
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBAmmoBag), "removeAmmoCount")]
+        public class bhaptics_AmmoPouchRemove
+        {
+            [HarmonyPostfix]
+            public static void Postfix(string ammo, int removeVal)
+            {
+                tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "creditAmmo")]
+        public class bhaptics_getAmmo
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "substractAmmo")]
+        public class bhaptics_removeAmmo
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        #endregion
+
+        #region Other
+
+        [HarmonyPatch(typeof(ANBGameLogic), "collectibleCollected")]
+        public class bhaptics_Collectible
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "collectCoinWallet")]
+        public class bhaptics_CollectCoins
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        #endregion
 
     }
 }
