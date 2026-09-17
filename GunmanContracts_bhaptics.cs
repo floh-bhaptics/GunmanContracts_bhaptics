@@ -7,13 +7,15 @@ using Il2CppHurricaneVR.Framework.Core.Player;
 using Il2CppHurricaneVR.Framework.Weapons;
 using Il2CppHurricaneVR.Framework.Weapons.Bow;
 using Il2CppHurricaneVR.Framework.Weapons.Guns;
+using Il2CppInfimaGames.LowPolyShooterPack.Legacy;
 using Il2CppKnifePlayerController;
 using MelonLoader;
 using MyBhapticsTactsuit;
 using System;
+using System.Collections;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.1.0", "Florian Fahrenberger")]
+[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.1.1", "Florian Fahrenberger")]
 [assembly: MelonGame("ANB_Seth", "GunmanContracts")]
 
 namespace GunmanContracts_bhaptics
@@ -64,7 +66,9 @@ namespace GunmanContracts_bhaptics
                 if (attacker == null) return;
 
                 var (angle, shift) = GetHapticsDirection(Camera.main.transform, attacker.transform.position);
-                tactsuitVr.PlayBackHit("impact", angle, shift);
+                shift = 0.0f;
+                if (shift >= 0.45f) tactsuitVr.PlaybackHaptics("headshot");
+                else tactsuitVr.PlayBackHit("impact", angle, shift);
             }
         }
 
@@ -329,6 +333,63 @@ namespace GunmanContracts_bhaptics
             public static void Postfix()
             {
                 tactsuitVr.PlaybackHaptics("ammo_pouch");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBSmartphone), "grabFromWrist")]
+        public class bhaptics_GrabSmartphone
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBSmartphone __instance)
+            {
+                tactsuitVr.PlaybackHaptics("wristpouch_l");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBSmartphone), "retractToWrist")]
+        public class bhaptics_RetractSmartphone
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBSmartphone __instance)
+            {
+                tactsuitVr.PlaybackHaptics("wristpouch_l");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBSFXPlayerManager), "StartSlowmotion")]
+        public class bhaptics_StartSlowmotion
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBSFXPlayerManager __instance)
+            {
+                tactsuitVr.PlaybackHaptics("start_slowmotion");
+            }
+        }
+
+
+        #endregion
+
+        #region Explosions
+
+        [HarmonyPatch(typeof(ANBBreakable), "shatterMe")]
+        public class bhaptics_Shatterme
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBBreakable __instance)
+            {
+                if (!__instance.explosionOnBreak) return;
+                if ((__instance.forceSlomo) || (__instance.slomoOnBreak) || (Time.timeScale < 1f)) tactsuitVr.PlaybackHaptics("slomo_explosion");
+                else tactsuitVr.PlaybackHaptics("explosion");
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBGameLogic), "DeathByRook")]
+        public class bhaptics_DeathByRook
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                tactsuitVr.PlaybackHaptics("slomo_explosion");
             }
         }
 
