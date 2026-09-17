@@ -23,6 +23,7 @@ namespace GunmanContracts_bhaptics
     public class GunmanContracts_bhaptics : MelonMod
     {
         public static TactsuitVR tactsuitVr;
+        public static bool BombTimerStarted = false;
 
         public override void OnInitializeMelon()
         {
@@ -389,10 +390,53 @@ namespace GunmanContracts_bhaptics
             [HarmonyPostfix]
             public static void Postfix()
             {
-                tactsuitVr.PlaybackHaptics("slomo_explosion");
+                tactsuitVr.PlaybackHaptics("explosion_epic");
             }
         }
 
+        [HarmonyPatch(typeof(ANBChallengeTriggerbox), "startCounting")]
+        public class bhaptics_startCounting
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                BombTimerStarted = true;
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBChallengeTriggerbox), "ButtonPushed")]
+        public class bhaptics_ButtonPushed
+        {
+            [HarmonyPostfix]
+            public static void Postfix()
+            {
+                BombTimerStarted = false;
+            }
+        }
+
+        [HarmonyPatch(typeof(ANBChallengeTriggerbox), "Update")]
+        public class bhaptics_Update
+        {
+            [HarmonyPostfix]
+            public static void Postfix(ANBChallengeTriggerbox __instance)
+            {
+                if (!BombTimerStarted) return;
+                if (!__instance.isActive) return;
+                if (!__instance.isContractBox) return;
+
+                if (__instance.timeCurrent <= 0f)
+                {
+                    BombTimerStarted = false;
+                    MelonCoroutines.Start(Delay());
+
+                    IEnumerator Delay()
+                    {
+                        yield return new WaitForSecondsRealtime(1.5f);
+                        tactsuitVr.PlaybackHaptics("explosion_epic");
+                    }
+                }
+            }
+        }
         #endregion
 
     }
