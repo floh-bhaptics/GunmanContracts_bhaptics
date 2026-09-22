@@ -67,7 +67,10 @@ namespace GunmanContracts_bhaptics
                 if (attacker == null) return;
 
                 var (angle, shift) = GetHapticsDirection(Camera.main.transform, attacker.transform.position);
+                // currently, the game doesn't track the hit position in this function, so the "shift" will
+                // always come back as -0.5, but it feels better in the middle of the torso:
                 shift = 0.0f;
+                // if we ever get the hit height, this will actually trigger:
                 if (shift >= 0.45f) tactsuitVr.PlaybackHaptics("headshot");
                 else tactsuitVr.PlayBackHit("impact", angle, shift);
             }
