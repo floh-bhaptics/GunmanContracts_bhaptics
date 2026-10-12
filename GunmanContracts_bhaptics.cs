@@ -15,7 +15,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.2.0", "Florian Fahrenberger")]
+[assembly: MelonInfo(typeof(GunmanContracts_bhaptics.GunmanContracts_bhaptics), "GunmanContracts_bhaptics", "1.3.0", "Florian Fahrenberger")]
 [assembly: MelonGame("ANB_Seth", "GunmanContracts")]
 
 namespace GunmanContracts_bhaptics
