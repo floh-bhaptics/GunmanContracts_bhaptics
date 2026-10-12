@@ -137,7 +137,14 @@ namespace GunmanContracts_bhaptics
                 bool isLeft = primaryGrab.IsLeftHandGrabbed;
                 bool twoHanded = isRight && isLeft; // both hands somehow on the same grip point
 
-                // Check whether the *other* hand is holding a second grip point (foregrip, rail, etc.)
+                // Off-hand on the foregrip/stabilizer. myStabilizerGrabbable is null on guns without
+                // a frontal stabilizer, so fall back to the plain bool in that case.
+                bool stabilized = __instance.myStabilizerGrabbable == null
+                    ? __instance.stabilizerHolding
+                    : __instance.myStabilizerGrabbable.IsHandGrabbed;
+                if (stabilized) twoHanded = true;
+
+                // Fallback: check whether the *other* hand is holding any second grip point (rail, etc.)
                 var hapticGrabbables = __instance.HapticGrabbables;
                 if (!twoHanded && hapticGrabbables != null)
                 {
@@ -158,6 +165,18 @@ namespace GunmanContracts_bhaptics
                 bool isRifle = (__instance.FireType == GunFireType.Automatic);
 
                 tactsuitVr.GunRecoil(isRightHand: isRight, twoHanded: twoHanded, isShotgun: isShotgun, isRifle: isRifle);
+            }
+        }
+
+        [HarmonyPatch(typeof(HVRBowBase), "ShootArrow")]
+        public class bhaptics_BowShoot
+        {
+            [HarmonyPostfix]
+            public static void Postfix(HVRBowBase __instance)
+            {
+                var bowHand = __instance.BowHand;
+                if (bowHand == null) return;
+                tactsuitVr.ShootBow(isRightHand: bowHand.IsRightHand);
             }
         }
 
